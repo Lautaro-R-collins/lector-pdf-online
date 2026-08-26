@@ -13,7 +13,7 @@ export function PDFProvider({ children }) {
 
   const addTab = useCallback((url, name) => {
     const id = `tab-${++_id}`
-    setTabs(prev => [...prev, { id, url, name, numPages: 0, pageNumber: 1, scale: 1.2, searchQuery: '', searchResults: [], searchIndex: 0 }])
+    setTabs(prev => [...prev, { id, url, name, numPages: 0, pageNumber: 1, scale: 1.2, invertedColors: false, searchQuery: '', searchResults: [], searchIndex: 0 }])
     setActiveTabId(id)
     return id
   }, [])
@@ -51,6 +51,7 @@ export function PDFProvider({ children }) {
 
   const setPageNumber  = useCallback((n) => activeTabId && updateTab(activeTabId, { pageNumber: n }), [activeTabId, updateTab])
   const setScale       = useCallback((s) => activeTabId && updateTab(activeTabId, { scale: s }), [activeTabId, updateTab])
+  const setInvertedColors = useCallback((invertedColors) => activeTabId && updateTab(activeTabId, { invertedColors }), [activeTabId, updateTab])
   const setNumPages    = useCallback((n) => activeTabId && updateTab(activeTabId, { numPages: n }), [activeTabId, updateTab])
   const setSearch      = useCallback((q) => activeTabId && updateTab(activeTabId, { searchQuery: q, searchResults: [], searchIndex: 0 }), [activeTabId, updateTab])
   const setSearchResults = useCallback((r) => activeTabId && updateTab(activeTabId, { searchResults: r }), [activeTabId, updateTab])
@@ -61,7 +62,7 @@ export function PDFProvider({ children }) {
       tabs, activeTabId, activeTab,
       addTab, closeTab, setActiveTabId,
       darkMode, setDarkMode,
-      setPageNumber, setScale, setNumPages,
+      setPageNumber, setScale, setInvertedColors, setNumPages,
       setSearch, setSearchResults, setSearchIndex,
     }}>
       {children}

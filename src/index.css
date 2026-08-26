@@ -36,6 +36,10 @@ body {
   border-radius: 4px;
 }
 
+.pdf-page-inverted {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 /* ── Scrollbar ───────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

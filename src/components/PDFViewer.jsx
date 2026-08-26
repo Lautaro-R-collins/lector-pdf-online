@@ -15,7 +15,7 @@ const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 export default function PDFViewer() {
   const { activeTab, setNumPages } = usePDFContext()
 
-  const { url, pageNumber = 1, scale = 1.2, searchQuery = '' } = activeTab ?? {}
+  const { url, pageNumber = 1, scale = 1.2, invertedColors = false, searchQuery = '' } = activeTab ?? {}
 
   const customTextRenderer = useCallback(({ str }) => {
     if (!searchQuery?.trim()) return str
@@ -51,7 +51,7 @@ export default function PDFViewer() {
           renderTextLayer={true}
           renderAnnotationLayer={true}
           customTextRenderer={searchQuery?.trim() ? customTextRenderer : undefined}
-          className="shadow-2xl shadow-black/50 rounded-sm overflow-hidden"
+          className={`shadow-2xl shadow-black/50 rounded-sm overflow-hidden ${invertedColors ? 'pdf-page-inverted' : ''}`}
           loading={
             <div className="flex items-center justify-center" style={{ minHeight: 600 }}>
               <div className="w-8 h-8 border-2 border-indigo-500/40 border-t-indigo-500 rounded-full animate-spin" />
