@@ -1,10 +1,11 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 
 const PDFContext = createContext(null)
 let _id = 0
 
 export function PDFProvider({ children }) {
   const [tabs, setTabs] = useState([])
+  const tabsRef = useRef([])
   const [activeTabId, setActiveTabId] = useState(null)
   const [darkMode, setDarkMode] = useState(true)
 
@@ -19,6 +20,8 @@ export function PDFProvider({ children }) {
 
   const closeTab = useCallback((id) => {
     setTabs(prev => {
+      const tabToClose = prev.find(t => t.id === id)
+      if (tabToClose?.url) URL.revokeObjectURL(tabToClose.url)
       const next = prev.filter(t => t.id !== id)
       setActiveTabId(cur => {
         if (cur !== id) return cur
@@ -28,6 +31,18 @@ export function PDFProvider({ children }) {
       })
       return next
     })
+  }, [])
+
+  useEffect(() => {
+    tabsRef.current = tabs
+  }, [tabs])
+
+  useEffect(() => {
+    return () => {
+      tabsRef.current.forEach(tab => {
+        if (tab.url) URL.revokeObjectURL(tab.url)
+      })
+    }
   }, [])
 
   const updateTab = useCallback((id, updates) => {
