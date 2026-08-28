@@ -13,7 +13,21 @@ export function PDFProvider({ children }) {
 
   const addTab = useCallback((url, name) => {
     const id = `tab-${++_id}`
-    setTabs(prev => [...prev, { id, url, name, numPages: 0, pageNumber: 1, scale: 1.2, invertedColors: false, searchQuery: '', searchResults: [], searchIndex: 0 }])
+    setTabs(prev => [...prev, {
+      id,
+      url,
+      name,
+      numPages: 0,
+      pageNumber: 1,
+      scale: 1.2,
+      invertedColors: false,
+      highlightMode: false,
+      highlightColor: '#facc15',
+      highlights: [],
+      searchQuery: '',
+      searchResults: [],
+      searchIndex: 0,
+    }])
     setActiveTabId(id)
     return id
   }, [])
@@ -52,6 +66,18 @@ export function PDFProvider({ children }) {
   const setPageNumber  = useCallback((n) => activeTabId && updateTab(activeTabId, { pageNumber: n }), [activeTabId, updateTab])
   const setScale       = useCallback((s) => activeTabId && updateTab(activeTabId, { scale: s }), [activeTabId, updateTab])
   const setInvertedColors = useCallback((invertedColors) => activeTabId && updateTab(activeTabId, { invertedColors }), [activeTabId, updateTab])
+  const setHighlightMode = useCallback((highlightMode) => activeTabId && updateTab(activeTabId, { highlightMode }), [activeTabId, updateTab])
+  const setHighlightColor = useCallback((highlightColor) => activeTabId && updateTab(activeTabId, { highlightColor }), [activeTabId, updateTab])
+  const addHighlight = useCallback((highlight) => {
+    if (!activeTabId) return
+    setTabs(prev => prev.map(t => (
+      t.id === activeTabId ? { ...t, highlights: [...(t.highlights ?? []), highlight] } : t
+    )))
+  }, [activeTabId])
+  const clearHighlights = useCallback(() => {
+    if (!activeTabId) return
+    updateTab(activeTabId, { highlights: [] })
+  }, [activeTabId, updateTab])
   const setNumPages    = useCallback((n) => activeTabId && updateTab(activeTabId, { numPages: n }), [activeTabId, updateTab])
   const setSearch      = useCallback((q) => activeTabId && updateTab(activeTabId, { searchQuery: q, searchResults: [], searchIndex: 0 }), [activeTabId, updateTab])
   const setSearchResults = useCallback((r) => activeTabId && updateTab(activeTabId, { searchResults: r }), [activeTabId, updateTab])
@@ -62,7 +88,9 @@ export function PDFProvider({ children }) {
       tabs, activeTabId, activeTab,
       addTab, closeTab, setActiveTabId,
       darkMode, setDarkMode,
-      setPageNumber, setScale, setInvertedColors, setNumPages,
+      setPageNumber, setScale, setInvertedColors,
+      setHighlightMode, setHighlightColor, addHighlight, clearHighlights,
+      setNumPages,
       setSearch, setSearchResults, setSearchIndex,
     }}>
       {children}
