@@ -53,7 +53,7 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
     if (prev) setScale(prev)
   }
 
-  const btnBase = 'flex items-center justify-center rounded-lg transition-all duration-150 text-slate-400 hover:text-slate-200 hover:bg-white/8 disabled:opacity-30 disabled:cursor-not-allowed'
+  const btnBase = 'flex items-center justify-center rounded-lg cursor-pointer transition-all duration-150 text-slate-400 hover:text-slate-200 hover:bg-white/8 disabled:opacity-30 disabled:cursor-not-allowed'
 
   return (
     <header className="shrink-0 flex items-center gap-2 px-3 h-12 border-b border-white/5 bg-[#0d0d14]">
