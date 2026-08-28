@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { usePDFContext } from '../context/PDFContext'
 import { usePDF } from '../hooks/usePDF'
 import { useSearch } from '../hooks/useSearch'
+import PomodoroTimer from './PomodoroTimer'
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3]
 
@@ -158,13 +159,17 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
 
       <div className="w-px h-5 bg-white/8 mx-1" />
 
+      <PomodoroTimer btnBase={btnBase} />
+
+      <div className="w-px h-5 bg-white/8 mx-1" />
+
       {/* Open file */}
       <button onClick={openFilePicker} className={`${btnBase} w-8 h-8`} title="Abrir PDF">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
       </button>
 
       {/* Dark mode toggle */}
-      <button
+        <button
         onClick={() => setDarkMode(d => !d)}
         className={`${btnBase} w-8 h-8`}
         title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
@@ -173,7 +178,7 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
           ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
           : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
         }
-      </button>
+      </button> 
     </header>
   )
 }
