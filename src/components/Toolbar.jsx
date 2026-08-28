@@ -5,9 +5,18 @@ import { useSearch } from '../hooks/useSearch'
 import PomodoroTimer from './PomodoroTimer'
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3]
+const HIGHLIGHT_COLORS = ['#facc15', '#86efac', '#93c5fd', '#f9a8d4', '#fdba74']
 
 export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
-  const { activeTab, setPageNumber, setScale, setInvertedColors, darkMode, setDarkMode } = usePDFContext()
+  const {
+    activeTab,
+    setPageNumber,
+    setScale,
+    setInvertedColors,
+    setHighlightMode,
+    setHighlightColor,
+    clearHighlights,
+  } = usePDFContext()
   const { openFilePicker } = usePDF()
   const { search, goToResult } = useSearch()
 
@@ -15,9 +24,21 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
   const [localQuery, setLocalQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [pageInput, setPageInput] = useState('')
+  const [highlightPanelOpen, setHighlightPanelOpen] = useState(false)
   const searchRef = useRef(null)
 
-  const { pageNumber = 1, numPages = 0, scale = 1.2, invertedColors = false, searchResults = [], searchIndex = 0, searchQuery = '' } = activeTab ?? {}
+  const {
+    pageNumber = 1,
+    numPages = 0,
+    scale = 1.2,
+    invertedColors = false,
+    highlightMode = false,
+    highlightColor = '#facc15',
+    highlights = [],
+    searchResults = [],
+    searchIndex = 0,
+    searchQuery = '',
+  } = activeTab ?? {}
 
   // Sync page input with actual page
   useEffect(() => { setPageInput(String(pageNumber)) }, [pageNumber])
@@ -113,6 +134,72 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.75v16.5m0 0a8.25 8.25 0 000-16.5m0 16.5a8.25 8.25 0 010-16.5m0 0c4.556 0 8.25 3.694 8.25 8.25S16.556 20.25 12 20.25" />
             </svg>
           </button>
+
+          <div className="relative">
+            <button
+              onClick={() => {
+                setHighlightMode(!highlightMode)
+                setHighlightPanelOpen(true)
+              }}
+              className={`${btnBase} w-8 h-8 ${highlightMode ? 'text-amber-300 bg-amber-500/10' : ''}`}
+              title={highlightMode ? 'Desactivar resaltador' : 'Activar resaltador'}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5h15M7.5 15.75l8.25-8.25 2.25 2.25-8.25 8.25H7.5v-2.25zM14.25 6l1.5-1.5a1.5 1.5 0 012.121 0l1.629 1.629a1.5 1.5 0 010 2.121L18 9.75" />
+              </svg>
+            </button>
+
+            {highlightPanelOpen && (
+              <div className="absolute left-0 top-10 z-40 w-48 rounded-lg border border-white/10 bg-[#16161f] p-3 shadow-2xl shadow-black/40">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-300">Resaltador</span>
+                  <button
+                    type="button"
+                    onClick={() => setHighlightPanelOpen(false)}
+                    className={`${btnBase} h-6 w-6`}
+                    title="Cerrar"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="mt-3 flex items-center gap-2">
+                  {HIGHLIGHT_COLORS.map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => {
+                        setHighlightColor(color)
+                        setHighlightMode(true)
+                      }}
+                      className={`h-7 w-7 cursor-pointer rounded-full border-2 transition-transform hover:scale-105 ${highlightColor === color ? 'border-white' : 'border-transparent'}`}
+                      style={{ backgroundColor: color }}
+                      title={`Color ${color}`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setHighlightMode(!highlightMode)}
+                  className={`mt-3 h-8 w-full cursor-pointer rounded-lg px-3 text-xs font-medium transition-colors ${highlightMode ? 'bg-amber-500/15 text-amber-200' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
+                >
+                  {highlightMode ? 'Resaltador activo' : 'Activar resaltador'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={clearHighlights}
+                  disabled={highlights.length === 0}
+                  className="mt-2 h-8 w-full cursor-pointer rounded-lg px-3 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  Borrar resaltados
+                </button>
+              </div>
+            )}
+          </div>
         </>
       )}
 
@@ -168,17 +255,7 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
       </button>
 
-      {/* Dark mode toggle */}
-        <button
-        onClick={() => setDarkMode(d => !d)}
-        className={`${btnBase} w-8 h-8`}
-        title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      >
-        {darkMode
-          ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
-          : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
-        }
-      </button> 
+      {/* Dark mode toggle hidden for now. */}
     </header>
   )
 }
