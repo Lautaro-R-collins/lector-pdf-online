@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { usePDFContext } from '../context/PDFContext'
+import { usePDFContext } from './usePDFContext'
 
 export function usePDF() {
   const { addTab } = usePDFContext()
@@ -7,7 +7,7 @@ export function usePDF() {
   const loadFile = useCallback((file) => {
     if (!file) return
     if (file.type !== 'application/pdf') {
-      alert('Por favor seleccioná un archivo PDF válido.')
+      console.warn('El archivo seleccionado no es un PDF válido:', file.name)
       return
     }
     const url = URL.createObjectURL(file)
@@ -20,7 +20,9 @@ export function usePDF() {
     input.accept = 'application/pdf'
     input.multiple = true
     input.onchange = (e) => {
-      Array.from(e.target.files).forEach(loadFile)
+      if (e.target.files) {
+        Array.from(e.target.files).forEach(loadFile)
+      }
     }
     input.click()
   }, [loadFile])
