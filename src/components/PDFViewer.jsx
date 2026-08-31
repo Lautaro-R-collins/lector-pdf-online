@@ -1,16 +1,10 @@
 import { useCallback, useMemo, useRef } from 'react'
-import { Document, Page, pdfjs } from 'react-pdf'
-import { usePDFContext } from '../context/PDFContext'
+import { Document, Page } from 'react-pdf'
+import '../lib/pdfWorker'
+import { usePDFContext } from '../hooks/usePDFContext'
+import { escapeRegex, calculateHighlightRects } from '../utils/pdfUtils'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
-
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
-
-const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 export default function PDFViewer() {
   const { activeTab, setNumPages, addHighlight } = usePDFContext()
@@ -41,40 +35,18 @@ export default function PDFViewer() {
     if (!highlightMode || !pageRef.current) return
 
     const selection = window.getSelection()
-    const selectedText = selection?.toString().trim()
-    if (!selection || selection.rangeCount === 0 || !selectedText) return
-
-    const pageBox = pageRef.current.getBoundingClientRect()
-    const range = selection.getRangeAt(0)
-    const rects = Array.from(range.getClientRects())
-      .map(rect => {
-        const left = Math.max(rect.left, pageBox.left)
-        const top = Math.max(rect.top, pageBox.top)
-        const right = Math.min(rect.right, pageBox.right)
-        const bottom = Math.min(rect.bottom, pageBox.bottom)
-
-        if (right <= left || bottom <= top) return null
-
-        return {
-          left: ((left - pageBox.left) / pageBox.width) * 100,
-          top: ((top - pageBox.top) / pageBox.height) * 100,
-          width: ((right - left) / pageBox.width) * 100,
-          height: ((bottom - top) / pageBox.height) * 100,
-        }
-      })
-      .filter(Boolean)
-
-    if (rects.length === 0) return
+    const result = calculateHighlightRects(selection, pageRef.current)
+    if (!result) return
 
     addHighlight({
       id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
       pageNumber,
       color: highlightColor,
-      text: selectedText,
-      rects,
+      text: result.text,
+      rects: result.rects,
     })
 
-    selection.removeAllRanges()
+    selection?.removeAllRanges()
   }, [addHighlight, highlightColor, highlightMode, pageNumber])
 
   if (!activeTab) return null
