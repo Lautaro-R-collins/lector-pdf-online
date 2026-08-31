@@ -1,40 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-
-const MODES = {
-  focus: { label: 'Foco', nextLabel: 'Descanso', color: 'text-emerald-300', bg: 'bg-emerald-500/10' },
-  shortBreak: { label: 'Descanso', nextLabel: 'Foco', color: 'text-sky-300', bg: 'bg-sky-500/10' },
-  longBreak: { label: 'Descanso largo', nextLabel: 'Foco', color: 'text-violet-300', bg: 'bg-violet-500/10' },
-}
-
-const clampMinutes = (value) => Math.min(180, Math.max(1, Number(value) || 1))
-const toSeconds = (minutes) => clampMinutes(minutes) * 60
-
-const formatTime = (seconds) => {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
-}
-
-const playSoftChime = () => {
-  const AudioContext = window.AudioContext || window.webkitAudioContext
-  if (!AudioContext) return
-
-  const audioContext = new AudioContext()
-  const gain = audioContext.createGain()
-  gain.gain.setValueAtTime(0.001, audioContext.currentTime)
-  gain.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.03)
-  gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.7)
-  gain.connect(audioContext.destination)
-
-  ;[660, 880].forEach((frequency, index) => {
-    const oscillator = audioContext.createOscillator()
-    oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.12)
-    oscillator.connect(gain)
-    oscillator.start(audioContext.currentTime + index * 0.12)
-    oscillator.stop(audioContext.currentTime + 0.65 + index * 0.12)
-  })
-}
+import {
+  POMODORO_MODES,
+  clampMinutes,
+  toSeconds,
+  formatTime,
+  playSoftChime,
+} from '../utils/pomodoroUtils'
 
 export default function PomodoroTimer({ btnBase }) {
   const [panelOpen, setPanelOpen] = useState(false)
@@ -48,7 +19,7 @@ export default function PomodoroTimer({ btnBase }) {
 
   const totalSeconds = useMemo(() => toSeconds(durations[mode]), [durations, mode])
   const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0
-  const modeStyle = MODES[mode]
+  const modeStyle = POMODORO_MODES[mode]
 
   useEffect(() => {
     if (!running) return undefined
@@ -65,7 +36,7 @@ export default function PomodoroTimer({ btnBase }) {
           setFocusSessions(nextFocusSessions)
           setMode(nextMode)
           setRunning(false)
-          setNotice(`Tiempo de foco terminado. Sigue ${MODES[nextMode].label.toLowerCase()}.`)
+          setNotice(`Tiempo de foco terminado. Sigue ${POMODORO_MODES[nextMode].label.toLowerCase()}.`)
           return toSeconds(durations[nextMode])
         }
 
@@ -105,6 +76,7 @@ export default function PomodoroTimer({ btnBase }) {
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={() => setPanelOpen(open => !open)}
         className={`${btnBase} h-8 min-w-18 gap-1.5 px-2 ${running || panelOpen ? 'text-emerald-300 bg-emerald-500/10' : ''}`}
         title="Pomodoro"
@@ -140,9 +112,10 @@ export default function PomodoroTimer({ btnBase }) {
           </div>
 
           <div className="mt-3 grid grid-cols-3 gap-1 rounded-lg bg-white/5 p-1">
-            {Object.entries(MODES).map(([key, item]) => (
+            {Object.entries(POMODORO_MODES).map(([key, item]) => (
               <button
                 key={key}
+                type="button"
                 onClick={() => selectMode(key)}
                 className={`rounded-md px-2 py-1.5 text-xs transition-colors cursor-pointer ${mode === key ? 'bg-white/10 text-slate-100' : 'text-slate-500 hover:text-slate-200'}`}
               >
@@ -153,6 +126,7 @@ export default function PomodoroTimer({ btnBase }) {
 
           <div className="mt-3 flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setRunning(value => !value)}
               className="flex h-8 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-indigo-600/80 px-3 text-xs font-medium text-white transition-colors hover:bg-indigo-500"
             >
@@ -168,6 +142,7 @@ export default function PomodoroTimer({ btnBase }) {
               {running ? 'Pausar' : 'Iniciar'}
             </button>
             <button
+              type="button"
               onClick={resetTimer}
               className={`${btnBase} h-8 w-8`}
               title="Reiniciar"
