@@ -7,6 +7,19 @@ export function escapeRegex(str) {
 }
 
 /**
+ * Escapes HTML-sensitive characters before inserting PDF text into markup.
+ */
+export function escapeHtml(str) {
+  if (!str) return ''
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+/**
  * Calculates percentage-based bounding rectangles relative to a PDF page element.
  */
 export function calculateHighlightRects(selection, pageElement) {

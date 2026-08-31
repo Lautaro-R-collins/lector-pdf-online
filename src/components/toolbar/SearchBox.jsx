@@ -37,7 +37,7 @@ export default function SearchBox({
 
   return (
     <div className="flex items-center gap-1">
-      {searchOpen && (
+      {searchOpen ? (
         <form onSubmit={handleSearch} className="flex items-center gap-1 animate-in fade-in slide-in-from-right-2 duration-200">
           <input
             ref={searchRef}
@@ -85,22 +85,29 @@ export default function SearchBox({
           {localQuery && searchResults.length === 0 && !searching && (
             <span className="text-xs text-slate-600">Sin resultados</span>
           )}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(false)}
+            className={`${btnBase} w-7 h-7`}
+            title="Cerrar buscador"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
         </form>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          className={`${btnBase} w-8 h-8`}
+          title="Buscar texto"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+        </button>
       )}
-
-      <button
-        type="button"
-        onClick={() => {
-          setSearchOpen(o => !o)
-          if (searchOpen) setLocalQuery('')
-        }}
-        className={`${btnBase} w-8 h-8 ${searchOpen ? 'text-indigo-400 bg-indigo-500/10' : ''}`}
-        title="Buscar texto"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-        </svg>
-      </button>
     </div>
   )
 }

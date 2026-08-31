@@ -1,14 +1,15 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Document, Page } from 'react-pdf'
 import '../lib/pdfWorker'
 import { usePDFContext } from '../hooks/usePDFContext'
-import { escapeRegex, calculateHighlightRects } from '../utils/pdfUtils'
+import { escapeHtml, escapeRegex, calculateHighlightRects } from '../utils/pdfUtils'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 
 export default function PDFViewer() {
   const { activeTab, setNumPages, addHighlight } = usePDFContext()
   const pageRef = useRef(null)
+  const [searchHighlightRects, setSearchHighlightRects] = useState([])
 
   const {
     url,
@@ -19,17 +20,81 @@ export default function PDFViewer() {
     highlightColor = '#facc15',
     highlights = [],
     searchQuery = '',
+    searchResults = [],
+    searchIndex = 0,
   } = activeTab ?? {}
 
-  const customTextRenderer = useCallback(({ str }) => {
+  const activeSearchResult = searchResults[searchIndex]
+  const activeSearchPageNumber = typeof activeSearchResult === 'number'
+    ? activeSearchResult
+    : activeSearchResult?.pageNumber
+  const activeSearchMatchIndex = typeof activeSearchResult === 'number'
+    ? 0
+    : activeSearchResult?.pageMatchIndex
+  const activeSearchItemIndex = typeof activeSearchResult === 'number'
+    ? undefined
+    : activeSearchResult?.itemIndex
+  const activeSearchItemMatchIndex = typeof activeSearchResult === 'number'
+    ? undefined
+    : activeSearchResult?.itemMatchIndex
+
+  const customTextRenderer = useCallback(({ str, itemIndex }) => {
     if (!searchQuery?.trim()) return str
     const regex = new RegExp(`(${escapeRegex(searchQuery)})`, 'gi')
-    return str.replace(regex, '<mark class="pdf-highlight">$1</mark>')
-  }, [searchQuery])
+    let itemMatchIndex = 0
+
+    return str.replace(regex, match => {
+      const isActiveMatch = pageNumber === activeSearchPageNumber
+        && (
+          itemIndex === activeSearchItemIndex
+          ? itemMatchIndex === activeSearchItemMatchIndex
+          : activeSearchItemIndex === undefined && itemMatchIndex === activeSearchMatchIndex
+        )
+      const className = isActiveMatch ? 'pdf-highlight pdf-highlight-current' : 'pdf-highlight'
+      itemMatchIndex += 1
+
+      return `<mark class="${className}">${escapeHtml(match)}</mark>`
+    })
+  }, [
+    activeSearchItemIndex,
+    activeSearchItemMatchIndex,
+    activeSearchMatchIndex,
+    activeSearchPageNumber,
+    pageNumber,
+    searchQuery,
+  ])
 
   const pageHighlights = useMemo(() => {
     return highlights.filter(highlight => highlight.pageNumber === pageNumber)
   }, [highlights, pageNumber])
+
+  const updateSearchHighlightRects = useCallback(() => {
+    if (!pageRef.current || !searchQuery?.trim()) {
+      setSearchHighlightRects([])
+      return
+    }
+
+    requestAnimationFrame(() => {
+      if (!pageRef.current) return
+
+      const pageBox = pageRef.current.getBoundingClientRect()
+      const marks = Array.from(pageRef.current.querySelectorAll('.pdf-highlight'))
+
+      setSearchHighlightRects(marks.flatMap(mark => (
+        Array.from(mark.getClientRects()).map(rect => ({
+          left: ((rect.left - pageBox.left) / pageBox.width) * 100,
+          top: ((rect.top - pageBox.top) / pageBox.height) * 100,
+          width: (rect.width / pageBox.width) * 100,
+          height: (rect.height / pageBox.height) * 100,
+          active: mark.classList.contains('pdf-highlight-current'),
+        }))
+      )))
+    })
+  }, [searchQuery])
+
+  useEffect(() => {
+    updateSearchHighlightRects()
+  }, [pageNumber, scale, searchIndex, searchQuery, updateSearchHighlightRects])
 
   const handleMouseUp = useCallback(() => {
     if (!highlightMode || !pageRef.current) return
@@ -82,6 +147,7 @@ export default function PDFViewer() {
             renderTextLayer={true}
             renderAnnotationLayer={true}
             customTextRenderer={searchQuery?.trim() ? customTextRenderer : undefined}
+            onRenderTextLayerSuccess={updateSearchHighlightRects}
             className={`shadow-2xl shadow-black/50 rounded-sm overflow-hidden ${invertedColors ? 'pdf-page-inverted' : ''}`}
             loading={
               <div className="flex items-center justify-center" style={{ minHeight: 600 }}>
@@ -90,6 +156,18 @@ export default function PDFViewer() {
             }
           />
           <div className="pdf-highlight-layer">
+            {searchHighlightRects.map((rect, index) => (
+              <span
+                key={`search-${index}`}
+                className={`pdf-search-highlight ${rect.active ? 'pdf-search-highlight-current' : ''}`}
+                style={{
+                  left: `${rect.left}%`,
+                  top: `${rect.top}%`,
+                  width: `${rect.width}%`,
+                  height: `${rect.height}%`,
+                }}
+              />
+            ))}
             {pageHighlights.map(highlight => (
               highlight.rects.map((rect, index) => (
                 <span
