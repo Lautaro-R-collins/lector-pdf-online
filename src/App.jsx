@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { PDFProvider, usePDFContext } from './context/PDFContext'
+import { PDFProvider } from './context/PDFContext'
+import { usePDFContext } from './hooks/usePDFContext'
 import TabBar from './components/TabBar'
 import Toolbar from './components/Toolbar'
 import Sidebar from './components/Sidebar'
