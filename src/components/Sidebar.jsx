@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Document, Page } from 'react-pdf'
-import { usePDFContext } from '../context/PDFContext'
+import '../lib/pdfWorker'
+import { usePDFContext } from '../hooks/usePDFContext'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 
@@ -91,6 +92,7 @@ export default function Sidebar({ open }) {
             return (
               <button
                 key={pg}
+                type="button"
                 onClick={() => setPageNumber(pg)}
                 className={`
                   group relative flex items-center justify-center rounded-lg overflow-hidden border-2 transition-all duration-150 shrink-0 bg-white/5
@@ -99,15 +101,15 @@ export default function Sidebar({ open }) {
                 style={{ height: THUMBNAIL_ROW_HEIGHT - 8 }}
                 title={`Página ${pg}`}
               >
-              <Page
-                pageNumber={pg}
-                width={THUMBNAIL_WIDTH}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                loading={
-                  <div className="w-31 h-44 bg-white/5 animate-pulse rounded" />
-                }
-              />
+                <Page
+                  pageNumber={pg}
+                  width={THUMBNAIL_WIDTH}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  loading={
+                    <div className="w-31 h-44 bg-white/5 animate-pulse rounded" />
+                  }
+                />
                 <div className={`absolute bottom-0 inset-x-0 text-center py-0.5 text-[10px] font-medium
                   ${isActive ? 'bg-indigo-500 text-white' : 'bg-black/60 text-slate-400 opacity-0 group-hover:opacity-100'}`}>
                   {pg}
