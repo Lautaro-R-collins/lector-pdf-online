@@ -1,4 +1,4 @@
-import { usePDFContext } from '../context/PDFContext'
+import { usePDFContext } from '../hooks/usePDFContext'
 import { usePDF } from '../hooks/usePDF'
 
 export default function TabBar() {
@@ -8,16 +8,18 @@ export default function TabBar() {
   if (tabs.length === 0) return null
 
   return (
-    <div className="flex items-center gap-1 px-2 pt-2 overflow-x-auto border-b border-white/5 bg-[#0d0d14] shrink-0"
-      style={{ scrollbarWidth: 'none' }}>
-
+    <div
+      className="flex items-center gap-1 px-2 pt-2 overflow-x-auto border-b border-white/5 bg-[#0d0d14] shrink-0"
+      style={{ scrollbarWidth: 'none' }}
+    >
       {tabs.map(tab => (
         <button
           key={tab.id}
+          type="button"
           onClick={() => setActiveTabId(tab.id)}
           className={`
             group flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-xs font-medium
-            max-w-45 shrink-0 transition-all duration-150 border border-b-0 relative
+            max-w-45 shrink-0 transition-all duration-150 border border-b-0 relative cursor-pointer
             ${tab.id === activeTabId
               ? 'bg-[#16161f] border-white/10 text-slate-200'
               : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'
@@ -37,8 +39,19 @@ export default function TabBar() {
 
           <span
             role="button"
-            onClick={(e) => { e.stopPropagation(); closeTab(tab.id) }}
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation()
+              closeTab(tab.id)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation()
+                closeTab(tab.id)
+              }
+            }}
             className="shrink-0 w-4 h-4 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-all"
+            title="Cerrar pestaña"
           >
             ✕
           </span>
@@ -47,9 +60,10 @@ export default function TabBar() {
 
       {/* New tab / open file button */}
       <button
+        type="button"
         onClick={openFilePicker}
         title="Abrir nuevo PDF"
-        className="shrink-0 ml-1 mb-1.5 w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/10 transition-all text-lg leading-none"
+        className="shrink-0 ml-1 mb-1.5 w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/10 transition-all text-lg leading-none cursor-pointer"
       >
         +
       </button>
