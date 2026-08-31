@@ -1,7 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
-
-const PDFContext = createContext(null)
-let _id = 0
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { PDFContext } from './PDFContextObject'
 
 export function PDFProvider({ children }) {
   const [tabs, setTabs] = useState([])
@@ -9,10 +7,13 @@ export function PDFProvider({ children }) {
   const [activeTabId, setActiveTabId] = useState(null)
   const [darkMode, setDarkMode] = useState(true)
 
-  const activeTab = tabs.find(t => t.id === activeTabId) ?? null
+  const activeTab = useMemo(
+    () => tabs.find(t => t.id === activeTabId) ?? null,
+    [tabs, activeTabId]
+  )
 
   const addTab = useCallback((url, name) => {
-    const id = `tab-${++_id}`
+    const id = `tab-${crypto.randomUUID?.() ?? Date.now()}-${Math.random().toString(36).substring(2, 7)}`
     setTabs(prev => [...prev, {
       id,
       url,
@@ -63,43 +64,113 @@ export function PDFProvider({ children }) {
     setTabs(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
   }, [])
 
-  const setPageNumber  = useCallback((n) => activeTabId && updateTab(activeTabId, { pageNumber: n }), [activeTabId, updateTab])
-  const setScale       = useCallback((s) => activeTabId && updateTab(activeTabId, { scale: s }), [activeTabId, updateTab])
-  const setInvertedColors = useCallback((invertedColors) => activeTabId && updateTab(activeTabId, { invertedColors }), [activeTabId, updateTab])
-  const setHighlightMode = useCallback((highlightMode) => activeTabId && updateTab(activeTabId, { highlightMode }), [activeTabId, updateTab])
-  const setHighlightColor = useCallback((highlightColor) => activeTabId && updateTab(activeTabId, { highlightColor }), [activeTabId, updateTab])
+  const setPageNumber = useCallback(
+    (n) => activeTabId && updateTab(activeTabId, { pageNumber: n }),
+    [activeTabId, updateTab]
+  )
+
+  const setScale = useCallback(
+    (s) => activeTabId && updateTab(activeTabId, { scale: s }),
+    [activeTabId, updateTab]
+  )
+
+  const setInvertedColors = useCallback(
+    (invertedColors) => activeTabId && updateTab(activeTabId, { invertedColors }),
+    [activeTabId, updateTab]
+  )
+
+  const setHighlightMode = useCallback(
+    (highlightMode) => activeTabId && updateTab(activeTabId, { highlightMode }),
+    [activeTabId, updateTab]
+  )
+
+  const setHighlightColor = useCallback(
+    (highlightColor) => activeTabId && updateTab(activeTabId, { highlightColor }),
+    [activeTabId, updateTab]
+  )
+
   const addHighlight = useCallback((highlight) => {
     if (!activeTabId) return
     setTabs(prev => prev.map(t => (
       t.id === activeTabId ? { ...t, highlights: [...(t.highlights ?? []), highlight] } : t
     )))
   }, [activeTabId])
+
   const clearHighlights = useCallback(() => {
     if (!activeTabId) return
     updateTab(activeTabId, { highlights: [] })
   }, [activeTabId, updateTab])
-  const setNumPages    = useCallback((n) => activeTabId && updateTab(activeTabId, { numPages: n }), [activeTabId, updateTab])
-  const setSearch      = useCallback((q) => activeTabId && updateTab(activeTabId, { searchQuery: q, searchResults: [], searchIndex: 0 }), [activeTabId, updateTab])
-  const setSearchResults = useCallback((r) => activeTabId && updateTab(activeTabId, { searchResults: r }), [activeTabId, updateTab])
-  const setSearchIndex   = useCallback((i) => activeTabId && updateTab(activeTabId, { searchIndex: i }), [activeTabId, updateTab])
+
+  const setNumPages = useCallback(
+    (n) => activeTabId && updateTab(activeTabId, { numPages: n }),
+    [activeTabId, updateTab]
+  )
+
+  const setSearch = useCallback(
+    (q) => activeTabId && updateTab(activeTabId, { searchQuery: q, searchResults: [], searchIndex: 0 }),
+    [activeTabId, updateTab]
+  )
+
+  const setSearchResults = useCallback(
+    (r) => activeTabId && updateTab(activeTabId, { searchResults: r }),
+    [activeTabId, updateTab]
+  )
+
+  const setSearchIndex = useCallback(
+    (i) => activeTabId && updateTab(activeTabId, { searchIndex: i }),
+    [activeTabId, updateTab]
+  )
+
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode(prev => !prev)
+  }, [])
+
+  const contextValue = useMemo(() => ({
+    tabs,
+    activeTabId,
+    activeTab,
+    addTab,
+    closeTab,
+    setActiveTabId,
+    darkMode,
+    setDarkMode,
+    toggleDarkMode,
+    setPageNumber,
+    setScale,
+    setInvertedColors,
+    setHighlightMode,
+    setHighlightColor,
+    addHighlight,
+    clearHighlights,
+    setNumPages,
+    setSearch,
+    setSearchResults,
+    setSearchIndex,
+  }), [
+    tabs,
+    activeTabId,
+    activeTab,
+    addTab,
+    closeTab,
+    setActiveTabId,
+    darkMode,
+    toggleDarkMode,
+    setPageNumber,
+    setScale,
+    setInvertedColors,
+    setHighlightMode,
+    setHighlightColor,
+    addHighlight,
+    clearHighlights,
+    setNumPages,
+    setSearch,
+    setSearchResults,
+    setSearchIndex,
+  ])
 
   return (
-    <PDFContext.Provider value={{
-      tabs, activeTabId, activeTab,
-      addTab, closeTab, setActiveTabId,
-      darkMode, setDarkMode,
-      setPageNumber, setScale, setInvertedColors,
-      setHighlightMode, setHighlightColor, addHighlight, clearHighlights,
-      setNumPages,
-      setSearch, setSearchResults, setSearchIndex,
-    }}>
+    <PDFContext.Provider value={contextValue}>
       {children}
     </PDFContext.Provider>
   )
-}
-
-export const usePDFContext = () => {
-  const ctx = useContext(PDFContext)
-  if (!ctx) throw new Error('usePDFContext must be used within PDFProvider')
-  return ctx
 }
