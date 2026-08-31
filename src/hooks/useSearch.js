@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
-import { pdfjs } from 'react-pdf'
-import { usePDFContext } from '../context/PDFContext'
+import { pdfjs } from '../lib/pdfWorker'
+import { usePDFContext } from './usePDFContext'
 
 export function useSearch() {
   const { activeTab, setSearchResults, setSearchIndex, setPageNumber } = usePDFContext()
@@ -10,22 +10,35 @@ export function useSearch() {
       setSearchResults([])
       return
     }
+
+    let pdfDoc = null
     try {
-      const pdf = await pdfjs.getDocument(activeTab.url).promise
+      const loadingTask = pdfjs.getDocument(activeTab.url)
+      pdfDoc = await loadingTask.promise
       const results = []
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i)
+
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i)
         const content = await page.getTextContent()
         const text = content.items.map(item => item.str).join(' ')
-        if (text.toLowerCase().includes(query.toLowerCase())) results.push(i)
+
+        if (text.toLowerCase().includes(query.toLowerCase())) {
+          results.push(i)
+        }
       }
+
       setSearchResults(results)
       if (results.length > 0) {
         setPageNumber(results[0])
         setSearchIndex(0)
       }
     } catch (err) {
-      console.error('Search error:', err)
+      console.error('Error al realizar búsqueda en el PDF:', err)
+      setSearchResults([])
+    } finally {
+      if (pdfDoc) {
+        pdfDoc.destroy().catch(() => {})
+      }
     }
   }, [activeTab, setSearchResults, setPageNumber, setSearchIndex])
 
