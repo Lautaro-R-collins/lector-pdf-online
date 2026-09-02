@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { PDFContext } from './PDFContextObject'
+import { updateBook } from '../services/libraryStorage'
 
 export function PDFProvider({ children }) {
   const [tabs, setTabs] = useState([])
@@ -12,26 +13,45 @@ export function PDFProvider({ children }) {
     [tabs, activeTabId]
   )
 
-  const addTab = useCallback((url, name) => {
-    const id = `tab-${crypto.randomUUID?.() ?? Date.now()}-${Math.random().toString(36).substring(2, 7)}`
-    setTabs(prev => [...prev, {
-      id,
-      url,
-      name,
-      numPages: 0,
-      pageNumber: 1,
-      scale: 1.2,
-      invertedColors: false,
-      highlightMode: false,
-      highlightColor: '#facc15',
-      highlights: [],
-      searchQuery: '',
-      searchResults: [],
-      searchIndex: 0,
-    }])
+  const addTab = useCallback((url, name, extraProps = {}) => {
+    const id = extraProps.bookId ? `book-tab-${extraProps.bookId}` : `tab-${crypto.randomUUID?.() ?? Date.now()}`
+
+    setTabs(prev => {
+      const existing = prev.find(t => t.id === id)
+      if (existing) {
+        return prev
+      }
+      return [...prev, {
+        id,
+        url,
+        name,
+        numPages: extraProps.numPages || 0,
+        pageNumber: extraProps.pageNumber || 1,
+        scale: 1.2,
+        invertedColors: false,
+        highlightMode: false,
+        highlightColor: '#facc15',
+        highlights: [],
+        searchQuery: '',
+        searchResults: [],
+        searchIndex: 0,
+        bookId: extraProps.bookId || null,
+      }]
+    })
+
     setActiveTabId(id)
     return id
   }, [])
+
+  const openBookFromLibrary = useCallback((book) => {
+    if (!book || !book.pdfBlob) return
+    const url = URL.createObjectURL(book.pdfBlob)
+    addTab(url, book.title, {
+      bookId: book.id,
+      numPages: book.numPages || 0,
+      pageNumber: book.currentPage || 1,
+    })
+  }, [addTab])
 
   const closeTab = useCallback((id) => {
     setTabs(prev => {
@@ -61,7 +81,18 @@ export function PDFProvider({ children }) {
   }, [])
 
   const updateTab = useCallback((id, updates) => {
-    setTabs(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
+    setTabs(prev => {
+      const target = prev.find(t => t.id === id)
+      if (target?.bookId) {
+        if (updates.pageNumber !== undefined || updates.numPages !== undefined) {
+          updateBook(target.bookId, {
+            ...(updates.pageNumber !== undefined ? { currentPage: updates.pageNumber } : {}),
+            ...(updates.numPages !== undefined ? { numPages: updates.numPages } : {}),
+          }).catch(console.error)
+        }
+      }
+      return prev.map(t => t.id === id ? { ...t, ...updates } : t)
+    })
   }, [])
 
   const setPageNumber = useCallback(
@@ -130,6 +161,7 @@ export function PDFProvider({ children }) {
     activeTabId,
     activeTab,
     addTab,
+    openBookFromLibrary,
     closeTab,
     setActiveTabId,
     darkMode,
@@ -151,6 +183,7 @@ export function PDFProvider({ children }) {
     activeTabId,
     activeTab,
     addTab,
+    openBookFromLibrary,
     closeTab,
     setActiveTabId,
     darkMode,
