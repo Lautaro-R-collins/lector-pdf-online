@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { PDFProvider } from './context/PDFContext'
 import { usePDFContext } from './hooks/usePDFContext'
 import TabBar from './components/TabBar'
@@ -6,15 +7,16 @@ import Toolbar from './components/Toolbar'
 import Sidebar from './components/Sidebar'
 import PDFViewer from './components/PDFViewer'
 import DropZone from './components/DropZone'
+import LibraryPage from './pages/LibraryPage'
 import { useDropzone } from 'react-dropzone'
 import { usePDF } from './hooks/usePDF'
 
-function AppLayout() {
-  const { tabs, darkMode } = usePDFContext()
+function ReaderView() {
+  const { tabs } = usePDFContext()
   const { loadFile } = usePDF()
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
-  // Global drag-and-drop on the whole app window
+  // Global drag-and-drop on the reader page window
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (files) => files.forEach(loadFile),
     accept: { 'application/pdf': ['.pdf'] },
@@ -25,7 +27,7 @@ function AppLayout() {
   return (
     <div
       {...getRootProps()}
-      className={`flex flex-col h-screen overflow-hidden transition-colors duration-300 ${darkMode ? 'dark' : 'light'}`}
+      className="flex flex-col flex-1 overflow-hidden relative"
     >
       <input {...getInputProps()} />
 
@@ -39,7 +41,6 @@ function AppLayout() {
         </div>
       )}
 
-      <TabBar />
       <Toolbar sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(o => !o)} />
 
       <div className="flex flex-1 min-h-0">
@@ -50,10 +51,29 @@ function AppLayout() {
   )
 }
 
+function MainLayout() {
+  const { darkMode } = usePDFContext()
+
+  return (
+    <div className={`flex flex-col h-screen overflow-hidden transition-colors duration-300 ${darkMode ? 'dark' : 'light'}`}>
+      <TabBar />
+      <div className="flex-1 flex overflow-hidden">
+        <Routes>
+          <Route path="/" element={<Navigate to="/reader" replace />} />
+          <Route path="/reader" element={<ReaderView />} />
+          <Route path="/library" element={<LibraryPage />} />
+        </Routes>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   return (
-    <PDFProvider>
-      <AppLayout />
-    </PDFProvider>
+    <BrowserRouter>
+      <PDFProvider>
+        <MainLayout />
+      </PDFProvider>
+    </BrowserRouter>
   )
 }
