@@ -52,10 +52,8 @@ function ReaderView() {
 }
 
 function MainLayout() {
-  const { darkMode } = usePDFContext()
-
   return (
-    <div className={`flex flex-col h-screen overflow-hidden transition-colors duration-300 ${darkMode ? 'dark' : 'light'}`}>
+    <div className="dark flex flex-col h-screen overflow-hidden transition-colors duration-300">
       <TabBar />
       <div className="flex-1 flex overflow-hidden">
         <Routes>

@@ -6,7 +6,6 @@ export function PDFProvider({ children }) {
   const [tabs, setTabs] = useState([])
   const tabsRef = useRef([])
   const [activeTabId, setActiveTabId] = useState(null)
-  const [darkMode, setDarkMode] = useState(true)
 
   const activeTab = useMemo(
     () => tabs.find(t => t.id === activeTabId) ?? null,
@@ -152,10 +151,6 @@ export function PDFProvider({ children }) {
     [activeTabId, updateTab]
   )
 
-  const toggleDarkMode = useCallback(() => {
-    setDarkMode(prev => !prev)
-  }, [])
-
   const contextValue = useMemo(() => ({
     tabs,
     activeTabId,
@@ -164,9 +159,6 @@ export function PDFProvider({ children }) {
     openBookFromLibrary,
     closeTab,
     setActiveTabId,
-    darkMode,
-    setDarkMode,
-    toggleDarkMode,
     setPageNumber,
     setScale,
     setInvertedColors,
@@ -186,8 +178,6 @@ export function PDFProvider({ children }) {
     openBookFromLibrary,
     closeTab,
     setActiveTabId,
-    darkMode,
-    toggleDarkMode,
     setPageNumber,
     setScale,
     setInvertedColors,

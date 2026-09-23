@@ -9,31 +9,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Dark theme (default) ────────────────────────────── */
 .dark {
   background: #0a0a14;
   color: #e2e8f0;
   color-scheme: dark;
-}
-
-/* ── Light theme ─────────────────────────────────────── */
-.light {
-  background: #f0eeea;
-  color: #1a1a2e;
-  color-scheme: light;
-}
-
-.light header,
-.light aside,
-.light [class*="bg-\[#0d0d14\]"],
-.light [class*="bg-\[#16161f\]"] {
-  background-color: #e8e6e2 !important;
-  border-color: #d0ceca !important;
-}
-
-/* Override react-pdf canvas background in light mode */
-.light .react-pdf__Page canvas {
-  border-radius: 4px;
 }
 
 .pdf-page-inverted {
