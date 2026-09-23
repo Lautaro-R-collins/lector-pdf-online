@@ -6,6 +6,7 @@ import PageNavigation from './toolbar/PageNavigation'
 import ZoomControls from './toolbar/ZoomControls'
 import HighlightPicker from './toolbar/HighlightPicker'
 import SearchBox from './toolbar/SearchBox'
+import DownloadMenu from './toolbar/DownloadMenu'
 
 export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
   const {
@@ -105,6 +106,13 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
 
       {/* Pomodoro Timer */}
       <PomodoroTimer btnBase={btnBase} />
+
+      {activeTab && (
+        <>
+          <div className="w-px h-5 bg-white/8 mx-1" />
+          <DownloadMenu activeTab={activeTab} btnBase={btnBase} />
+        </>
+      )}
 
       {/* Open file */}
       <button
