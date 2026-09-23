@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePDFContext } from '../hooks/usePDFContext'
 import { usePDF } from '../hooks/usePDF'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -9,8 +9,33 @@ export default function TabBar() {
   const navigate = useNavigate()
   const location = useLocation()
   const [modeMenuOpen, setModeMenuOpen] = useState(false)
+  const modeMenuRef = useRef(null)
 
   const isLibraryActive = location.pathname === '/library'
+
+  useEffect(() => {
+    if (!modeMenuOpen) return
+
+    const handlePointerDown = (event) => {
+      if (!modeMenuRef.current?.contains(event.target)) {
+        setModeMenuOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setModeMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [modeMenuOpen])
 
   return (
     <div
@@ -80,11 +105,10 @@ export default function TabBar() {
         </button>
       </div>
 
-      {/* Right side: MODO Selector (Hover / Click Modal Dropdown) */}
+      {/* Right side: MODO Selector */}
       <div
+        ref={modeMenuRef}
         className="relative mb-1.5 shrink-0 ml-3 z-30"
-        onMouseEnter={() => setModeMenuOpen(true)}
-        onMouseLeave={() => setModeMenuOpen(false)}
       >
         <button
           type="button"
