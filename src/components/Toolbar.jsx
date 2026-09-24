@@ -5,6 +5,7 @@ import PomodoroTimer from './PomodoroTimer'
 import PageNavigation from './toolbar/PageNavigation'
 import ZoomControls from './toolbar/ZoomControls'
 import HighlightPicker from './toolbar/HighlightPicker'
+import AnnotationPicker from './toolbar/AnnotationPicker'
 import SearchBox from './toolbar/SearchBox'
 import DownloadMenu from './toolbar/DownloadMenu'
 
@@ -17,6 +18,9 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
     setHighlightMode,
     setHighlightColor,
     clearHighlights,
+    setAnnotationMode,
+    setAnnotationColor,
+    clearAnnotations,
   } = usePDFContext()
   const { openFilePicker } = usePDF()
   const { search, goToResult } = useSearch()
@@ -29,6 +33,9 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
     highlightMode = false,
     highlightColor = '#facc15',
     highlights = [],
+    annotationMode = false,
+    annotationColor = '#f59e0b',
+    annotations = [],
     searchResults = [],
     searchIndex = 0,
     searchQuery = '',
@@ -82,6 +89,18 @@ export default function Toolbar({ sidebarOpen, onToggleSidebar }) {
             setHighlightMode={setHighlightMode}
             setHighlightColor={setHighlightColor}
             clearHighlights={clearHighlights}
+            btnBase={btnBase}
+          />
+
+          {/* Annotation picker */}
+          <AnnotationPicker
+            annotationMode={annotationMode}
+            annotationColor={annotationColor}
+            annotations={annotations}
+            pageNumber={pageNumber}
+            setAnnotationMode={setAnnotationMode}
+            setAnnotationColor={setAnnotationColor}
+            clearAnnotations={clearAnnotations}
             btnBase={btnBase}
           />
         </>
