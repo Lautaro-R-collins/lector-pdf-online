@@ -5,6 +5,8 @@ export default function DownloadMenu({ activeTab, btnBase }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const hasHighlights = (activeTab?.highlights?.length ?? 0) > 0
+  const hasAnnotations = (activeTab?.annotations?.length ?? 0) > 0
+  const hasChanges = hasHighlights || hasAnnotations
 
   const handleDownload = async (downloadFn) => {
     if (!activeTab || isExporting) return
@@ -55,7 +57,7 @@ export default function DownloadMenu({ activeTab, btnBase }) {
           <button
             type="button"
             onClick={() => handleDownload(downloadHighlightedPdf)}
-            disabled={!hasHighlights}
+            disabled={!hasChanges}
             className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
           >
             <svg className="h-4 w-4 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>

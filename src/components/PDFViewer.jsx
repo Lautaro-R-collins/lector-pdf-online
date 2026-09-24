@@ -3,11 +3,21 @@ import { Document, Page } from 'react-pdf'
 import '../lib/pdfWorker'
 import { usePDFContext } from '../hooks/usePDFContext'
 import { escapeHtml, escapeRegex, calculateHighlightRects } from '../utils/pdfUtils'
+import AnnotationMarker from './annotation/AnnotationMarker'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 
 export default function PDFViewer() {
-  const { activeTab, setNumPages, addHighlight } = usePDFContext()
+  const {
+    activeTab,
+    setNumPages,
+    addHighlight,
+    addAnnotation,
+    updateAnnotation,
+    deleteAnnotation,
+    setActiveAnnotationId,
+    setAnnotationMode,
+  } = usePDFContext()
   const pageRef = useRef(null)
   const [searchHighlightRects, setSearchHighlightRects] = useState([])
 
@@ -19,6 +29,10 @@ export default function PDFViewer() {
     highlightMode = false,
     highlightColor = '#facc15',
     highlights = [],
+    annotationMode = false,
+    annotationColor = '#f59e0b',
+    annotations = [],
+    activeAnnotationId = null,
     searchQuery = '',
     searchResults = [],
     searchIndex = 0,
@@ -68,6 +82,10 @@ export default function PDFViewer() {
     return highlights.filter(highlight => highlight.pageNumber === pageNumber)
   }, [highlights, pageNumber])
 
+  const pageAnnotations = useMemo(() => {
+    return annotations.filter(annotation => annotation.pageNumber === pageNumber)
+  }, [annotations, pageNumber])
+
   const updateSearchHighlightRects = useCallback(() => {
     if (!pageRef.current || !searchQuery?.trim()) {
       setSearchHighlightRects([])
@@ -114,10 +132,55 @@ export default function PDFViewer() {
     selection?.removeAllRanges()
   }, [addHighlight, highlightColor, highlightMode, pageNumber])
 
+  const handlePageClick = useCallback((e) => {
+    if (!annotationMode || !pageRef.current) return
+
+    // Prevent creating a note when clicking inside an existing annotation marker or popover
+    if (e.target.closest('[data-annotation-element="true"]')) return
+
+    const selection = window.getSelection()
+    if (selection && selection.toString().trim().length > 0) return
+
+    const pageBox = pageRef.current.getBoundingClientRect()
+    const clickX = e.clientX - pageBox.left
+    const clickY = e.clientY - pageBox.top
+
+    const x = Math.max(3, Math.min(97, (clickX / pageBox.width) * 100))
+    const y = Math.max(3, Math.min(97, (clickY / pageBox.height) * 100))
+
+    const newId = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
+    addAnnotation({
+      id: newId,
+      pageNumber,
+      x: Number(x.toFixed(2)),
+      y: Number(y.toFixed(2)),
+      text: '',
+      color: annotationColor || '#f59e0b',
+      createdAt: new Date().toISOString(),
+    })
+    setActiveAnnotationId(newId)
+  }, [addAnnotation, annotationColor, annotationMode, pageNumber, setActiveAnnotationId])
+
   if (!activeTab) return null
 
   return (
-    <div className="flex-1 overflow-auto flex justify-center items-start p-8 min-h-0">
+    <div className="flex-1 overflow-auto flex flex-col items-center p-8 min-h-0">
+      {annotationMode && (
+        <div className="sticky top-0 z-30 mb-4 flex items-center justify-between gap-4 rounded-full border border-amber-500/30 bg-[#161622]/90 px-4 py-1.5 text-xs text-amber-200 backdrop-blur-md shadow-lg shadow-black/50">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+            <span>Modo anotación activo: hacé clic en cualquier parte de la página para añadir una nota</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAnnotationMode(false)}
+            className="cursor-pointer rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/30 transition-colors"
+          >
+            Finalizar
+          </button>
+        </div>
+      )}
+
       <Document
         file={url}
         onLoadSuccess={({ numPages }) => setNumPages(numPages)}
@@ -138,8 +201,9 @@ export default function PDFViewer() {
       >
         <div
           ref={pageRef}
+          onClick={handlePageClick}
           onMouseUp={handleMouseUp}
-          className={`relative ${highlightMode ? 'pdf-highlight-active' : ''}`}
+          className={`relative ${highlightMode ? 'pdf-highlight-active' : ''} ${annotationMode ? 'cursor-crosshair' : ''}`}
         >
           <Page
             pageNumber={pageNumber}
@@ -183,6 +247,21 @@ export default function PDFViewer() {
                   }}
                 />
               ))
+            ))}
+          </div>
+
+          {/* Annotations Layer */}
+          <div className="pdf-annotation-layer absolute inset-0 pointer-events-none z-20">
+            {pageAnnotations.map(annotation => (
+              <AnnotationMarker
+                key={annotation.id}
+                annotation={annotation}
+                isOpen={activeAnnotationId === annotation.id}
+                onOpen={(id) => setActiveAnnotationId(id)}
+                onClose={() => setActiveAnnotationId(null)}
+                onUpdate={(updates) => updateAnnotation(annotation.id, updates)}
+                onDelete={(id) => deleteAnnotation(id)}
+              />
             ))}
           </div>
         </div>

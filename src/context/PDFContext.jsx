@@ -30,7 +30,11 @@ export function PDFProvider({ children }) {
         invertedColors: false,
         highlightMode: false,
         highlightColor: '#facc15',
-        highlights: [],
+        highlights: extraProps.highlights || [],
+        annotationMode: false,
+        annotationColor: '#f59e0b',
+        annotations: extraProps.annotations || [],
+        activeAnnotationId: null,
         searchQuery: '',
         searchResults: [],
         searchIndex: 0,
@@ -49,6 +53,8 @@ export function PDFProvider({ children }) {
       bookId: book.id,
       numPages: book.numPages || 0,
       pageNumber: book.currentPage || 1,
+      highlights: book.highlights || [],
+      annotations: book.annotations || [],
     })
   }, [addTab])
 
@@ -83,11 +89,14 @@ export function PDFProvider({ children }) {
     setTabs(prev => {
       const target = prev.find(t => t.id === id)
       if (target?.bookId) {
-        if (updates.pageNumber !== undefined || updates.numPages !== undefined) {
-          updateBook(target.bookId, {
-            ...(updates.pageNumber !== undefined ? { currentPage: updates.pageNumber } : {}),
-            ...(updates.numPages !== undefined ? { numPages: updates.numPages } : {}),
-          }).catch(console.error)
+        const bookUpdates = {}
+        if (updates.pageNumber !== undefined) bookUpdates.currentPage = updates.pageNumber
+        if (updates.numPages !== undefined) bookUpdates.numPages = updates.numPages
+        if (updates.highlights !== undefined) bookUpdates.highlights = updates.highlights
+        if (updates.annotations !== undefined) bookUpdates.annotations = updates.annotations
+
+        if (Object.keys(bookUpdates).length > 0) {
+          updateBook(target.bookId, bookUpdates).catch(console.error)
         }
       }
       return prev.map(t => t.id === id ? { ...t, ...updates } : t)
@@ -110,7 +119,10 @@ export function PDFProvider({ children }) {
   )
 
   const setHighlightMode = useCallback(
-    (highlightMode) => activeTabId && updateTab(activeTabId, { highlightMode }),
+    (highlightMode) => activeTabId && updateTab(activeTabId, {
+      highlightMode,
+      ...(highlightMode ? { annotationMode: false } : {}),
+    }),
     [activeTabId, updateTab]
   )
 
@@ -119,16 +131,82 @@ export function PDFProvider({ children }) {
     [activeTabId, updateTab]
   )
 
+  const setAnnotationMode = useCallback(
+    (annotationMode) => activeTabId && updateTab(activeTabId, {
+      annotationMode,
+      ...(annotationMode ? { highlightMode: false } : {}),
+    }),
+    [activeTabId, updateTab]
+  )
+
+  const setAnnotationColor = useCallback(
+    (annotationColor) => activeTabId && updateTab(activeTabId, { annotationColor }),
+    [activeTabId, updateTab]
+  )
+
+  const setActiveAnnotationId = useCallback(
+    (activeAnnotationId) => activeTabId && updateTab(activeTabId, { activeAnnotationId }),
+    [activeTabId, updateTab]
+  )
+
   const addHighlight = useCallback((highlight) => {
     if (!activeTabId) return
-    setTabs(prev => prev.map(t => (
-      t.id === activeTabId ? { ...t, highlights: [...(t.highlights ?? []), highlight] } : t
-    )))
+    setTabs(prev => prev.map(t => {
+      if (t.id !== activeTabId) return t
+      const nextHighlights = [...(t.highlights ?? []), highlight]
+      if (t.bookId) {
+        updateBook(t.bookId, { highlights: nextHighlights }).catch(console.error)
+      }
+      return { ...t, highlights: nextHighlights }
+    }))
   }, [activeTabId])
 
   const clearHighlights = useCallback(() => {
     if (!activeTabId) return
     updateTab(activeTabId, { highlights: [] })
+  }, [activeTabId, updateTab])
+
+  const addAnnotation = useCallback((annotation) => {
+    if (!activeTabId) return
+    setTabs(prev => prev.map(t => {
+      if (t.id !== activeTabId) return t
+      const nextAnnotations = [...(t.annotations ?? []), annotation]
+      if (t.bookId) {
+        updateBook(t.bookId, { annotations: nextAnnotations }).catch(console.error)
+      }
+      return { ...t, annotations: nextAnnotations }
+    }))
+  }, [activeTabId])
+
+  const updateAnnotation = useCallback((annotationId, updates) => {
+    if (!activeTabId) return
+    setTabs(prev => prev.map(t => {
+      if (t.id !== activeTabId) return t
+      const nextAnnotations = (t.annotations ?? []).map(a =>
+        a.id === annotationId ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a
+      )
+      if (t.bookId) {
+        updateBook(t.bookId, { annotations: nextAnnotations }).catch(console.error)
+      }
+      return { ...t, annotations: nextAnnotations }
+    }))
+  }, [activeTabId])
+
+  const deleteAnnotation = useCallback((annotationId) => {
+    if (!activeTabId) return
+    setTabs(prev => prev.map(t => {
+      if (t.id !== activeTabId) return t
+      const nextAnnotations = (t.annotations ?? []).filter(a => a.id !== annotationId)
+      if (t.bookId) {
+        updateBook(t.bookId, { annotations: nextAnnotations }).catch(console.error)
+      }
+      return { ...t, annotations: nextAnnotations }
+    }))
+  }, [activeTabId])
+
+  const clearAnnotations = useCallback(() => {
+    if (!activeTabId) return
+    updateTab(activeTabId, { annotations: [] })
   }, [activeTabId, updateTab])
 
   const setNumPages = useCallback(
@@ -164,8 +242,15 @@ export function PDFProvider({ children }) {
     setInvertedColors,
     setHighlightMode,
     setHighlightColor,
+    setAnnotationMode,
+    setAnnotationColor,
+    setActiveAnnotationId,
     addHighlight,
     clearHighlights,
+    addAnnotation,
+    updateAnnotation,
+    deleteAnnotation,
+    clearAnnotations,
     setNumPages,
     setSearch,
     setSearchResults,
@@ -183,8 +268,15 @@ export function PDFProvider({ children }) {
     setInvertedColors,
     setHighlightMode,
     setHighlightColor,
+    setAnnotationMode,
+    setAnnotationColor,
+    setActiveAnnotationId,
     addHighlight,
     clearHighlights,
+    addAnnotation,
+    updateAnnotation,
+    deleteAnnotation,
+    clearAnnotations,
     setNumPages,
     setSearch,
     setSearchResults,
@@ -197,3 +289,4 @@ export function PDFProvider({ children }) {
     </PDFContext.Provider>
   )
 }
+
