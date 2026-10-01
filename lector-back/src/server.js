@@ -4,18 +4,18 @@ import { connectDB, disconnectDB } from './config/db.js'
 
 async function startServer() {
   try {
-    // Connect to database
-    await connectDB()
-
     const server = app.listen(config.port, () => {
       console.log(`
-🚀 Servidor Lector PDF Backend iniciado correctamente
-📡 Modo: ${config.nodeEnv}
-🔗 URL: http://localhost:${config.port}
-🩺 Health Check: http://localhost:${config.port}/api/health
-🌐 Frontend Permitido (CORS): ${config.clientUrl}
+Servidor Lector PDF Backend iniciado correctamente
+Modo: ${config.nodeEnv}
+URL: http://localhost:${config.port}
+Health Check: http://localhost:${config.port}/api/health
+Frontend Permitido (CORS): ${config.clientUrl}
       `)
     })
+
+    // Connect to database
+    await connectDB()
 
     // Graceful shutdown
     const handleShutdown = async (signal) => {
