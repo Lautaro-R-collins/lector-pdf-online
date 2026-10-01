@@ -8,12 +8,17 @@ import { errorHandler, notFoundHandler } from './middleware/errorMiddleware.js'
 
 const app = express()
 
+// Trust proxy for Render / reverse proxies (essential for HTTPS cookies & rate limiter)
+app.set('trust proxy', 1)
+
 // Security headers
 app.use(helmet())
 
 // CORS configuration supporting credentials (cookies, auth headers)
+const clientUrlClean = config.clientUrl?.replace(/\/$/, '')
 const allowedOrigins = [
-  config.clientUrl,
+  clientUrlClean,
+  'https://lector-pdf-online.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
@@ -26,7 +31,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true)
       }
-      return callback(null, true) // Allow during development
+      return callback(null, true) // Fallback during dev / preflight
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
