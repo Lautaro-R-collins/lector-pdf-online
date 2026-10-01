@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "workspaces": [
+    "lector-front",
+    "lector-back"
+  ],
   "scripts": {
     "dev": "npm run dev --prefix lector-front",
     "build": "npm run build --prefix lector-front",
